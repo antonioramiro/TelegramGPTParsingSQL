@@ -1,0 +1,4 @@
+mysql-connector-python==8.4.0
+mysqlclient==2.2.4
+openai==1.30.3
+python-telegram-bot==21.2
