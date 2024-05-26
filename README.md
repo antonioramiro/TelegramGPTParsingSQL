@@ -4,6 +4,8 @@ Parse content with GPT, and send it straight to a SQL database, via a friendly T
 
 This project integrates the Telegram messaging platform with OpenAI's GPT (Generative Pre-trained Transformer) model to parse user messages and save the responses to a SQL database.
 
+![Diagram displaying the flow of data, from a messy text to telegram, being later parsed by GPT and sent to a SQL DB.](diagram.jpg)
+
 ### Safety Notice
 
 **Important**: This project involves the storage of user-generated content in a SQL database. Assure that IP whitelisting is implemented to restrict database access to trusted sources. Access to the telegram bot should be restricted to authorized users only. Future versions of this project will include additional security features (such as a password).
