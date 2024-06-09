@@ -1,43 +1,41 @@
-import os
+import json
 import mysql.connector as sql
 import logging
 from telegram import Update
-from telegram.ext import filters, MessageHandler, ApplicationBuilder, ContextTypes
+from telegram.ext import filters, MessageHandler, ApplicationBuilder, CommandHandler, ContextTypes
 from openai import OpenAI
 
 def main():
     print("Initializing Telegram GPT Parsing to SQL Database...")
 
-    openaikey, telegrambotkey, dbsecrets = gather_secrets()
+    openaikey,telegrambotkey, dbsecrets = gatherSecrets()
 
     global instructions
-    instructions = '"""' + gather_instructions() + '"""'
+    instructions = '"""' + gatherInstructions() + '"""'
 
     global connection
-    connection = connect_to_database(dbsecrets)
+    connection = connectToDatase(dbsecrets)
 
     global GPT
-    GPT = turn_gpt_on(openaikey)
+    GPT = turnGPTOn(openaikey)
 
-    initiate_bot(telegrambotkey)
+    initiateBot(telegrambotkey)
+
 
 # Fetching the API keys and Database Secrets
 
-def gather_secrets():
-    openaikey = os.getenv('openaikey')
-    telegrambotkey = os.getenv('telegramkey')
-    dbsecrets = {
-        'host': os.getenv('host'),
-        'port': os.getenv('port'),
-        'user': os.getenv('user'),
-        'password': os.getenv('password'),
-        'database': os.getenv('database')
-    }
+def gatherSecrets():
+    with open("secrets.json", "r") as file:
+        secrets = json.load(file)
+
+    openaikey = secrets['openaikey']
+    telegrambotkey = secrets['telegramkey']
+    dbsecrets = secrets['dbsecrets']
 
     print("Gathering secret keys and database secrets...")
-    return openaikey, telegrambotkey, dbsecrets
+    return [openaikey, telegrambotkey, dbsecrets]
 
-def gather_instructions():
+def gatherInstructions():
     with open("instructions.txt", "r") as file:
         instructions = file.read()
 
@@ -46,7 +44,7 @@ def gather_instructions():
 
 # DATABASE and SQL
 
-def connect_to_database(dbsecrets):
+def connectToDatase(dbsecrets):
     print("Connecting to Database...")
     
     try:
@@ -60,12 +58,14 @@ def connect_to_database(dbsecrets):
 
         if connection.is_connected():
             print("Successfully connected to the database!")
+
     except sql.Error as e:
-        print(f"Error: {e}")
+            print(f"Error: {e}")
 
     return connection
 
-def save_to_database(query):
+
+def saveToDatabase(query):
     try:
         cursor = connection.cursor()
         cursor.execute(query)
@@ -76,32 +76,36 @@ def save_to_database(query):
 
 # OPEN AI GPT
 
-def turn_gpt_on(openaikey):
-    client = OpenAI(api_key=openaikey)
+def turnGPTOn(openaikey):
+    client = OpenAI(
+        api_key= openaikey
+    )  
 
     print("GPT is ready to chat...")
     return client
 
+
 # TELEGRAM BOT
 
-def initiate_bot(telegrambotkey):
+def initiateBot(telegrambotkey):
+
     print("Initializing Telegram Bot...")
     application = ApplicationBuilder().token(telegrambotkey).build()
     chat_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), chat)
 
     application.add_handler(chat_handler)
-    print("Bot is ready to chat, send the message to the bot to get a response...")
+    print("Bot is ready to chat, send the message to the bot to get the response...")
     application.run_polling()
 
 # Chat Handler
 
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     completion = GPT.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "system", "content": instructions},
-            {"role": "user", "content": update.message.text}
-        ]
+    model="gpt-4o",
+    messages=[
+        {"role": "system", "content": instructions},
+        {"role": "user", "content": update.message.text}
+    ]
     )
 
     resulting_message = completion.choices[0].message.content
@@ -109,7 +113,8 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print("The following message was sent to the bot: \n" + update.message.text + "\n \n")
     print("Bot's SQL response: \n" + resulting_message + "\n")
 
-    save_to_database(resulting_message)
+
+    saveToDatabase(resulting_message)
     
     await context.bot.send_message(chat_id=update.effective_chat.id, text=resulting_message)
 
