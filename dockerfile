@@ -4,7 +4,7 @@ FROM python:3.12.3-slim
 # Set the working directory in the container
 WORKDIR /usr/src/app
 
-# Install system dependencie
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
     libmariadb-dev \
@@ -22,4 +22,3 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Command to run the applica
-CMD ["python", "main.py"]
