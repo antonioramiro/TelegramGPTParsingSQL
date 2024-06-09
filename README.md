@@ -41,7 +41,7 @@ This project integrates the Telegram messaging platform with OpenAI's GPT (Gener
    pip install -r requirements.txt
    ```
 
-3. Obtain API keys for Telegram Bot and OpenAI and save them in an ENVIRONMENT VARIABLE, with the same names as in the following `secrets.json` file in the root directory of the project:
+3. Obtain API keys for Telegram Bot and OpenAI and save them in a `secrets.json` file in the root directory of the project:
 
    ```json
    {
